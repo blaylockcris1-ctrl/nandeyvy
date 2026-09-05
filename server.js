@@ -7,6 +7,7 @@ const https = require("https");
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
+
 const PORT = process.env.PORT || 8787;
 function findSite() {
   const candidates = [
@@ -27,6 +28,7 @@ if (!fs.existsSync(UP)) fs.mkdirSync(UP, { recursive: true });
 const FX = Number(process.env.FX_PYG || 7300);
 console.log("site folder:", ROOT, "exists:", fs.existsSync(path.join(ROOT, "index.html")));
 console.log("store:", STORE);
+
 function empty() {
   return { listings: [], office: { name: "", city: "", agents: [] }, leads: [], users: [] };
 }
@@ -66,6 +68,7 @@ async function initDb() {
     pool = null;
   }
 }
+
 const MIME = {
   ".html": "text/html; charset=utf-8",
   ".js": "text/javascript; charset=utf-8",
@@ -77,10 +80,12 @@ const MIME = {
   ".webmanifest": "application/manifest+json",
   ".json": "application/json"
 };
+
 function send(res, code, body, type = "application/json; charset=utf-8") {
   res.writeHead(code, { "Content-Type": type, "Access-Control-Allow-Origin": "*", "Cache-Control": "no-store" });
   res.end(body);
 }
+
 function readBody(req) {
   return new Promise((resolve) => {
     const chunks = [];
@@ -91,9 +96,11 @@ function readBody(req) {
     });
   });
 }
+
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, "http://localhost");
   const p = url.pathname;
+
   if (req.method === "OPTIONS") {
     res.writeHead(204, {
       "Access-Control-Allow-Origin": "*",
@@ -102,6 +109,7 @@ const server = http.createServer(async (req, res) => {
     });
     return res.end();
   }
+
   if (p === "/api/health" && req.method === "GET") {
     return send(res, 200, JSON.stringify({ ok: true, listings: load().listings.length }));
   }
@@ -186,6 +194,35 @@ const server = http.createServer(async (req, res) => {
       send(res, 200, data, MIME[ext] || "application/octet-stream");
     });
   }
+  if (p === "/api/listings/paid" && req.method === "POST") {
+    const body = await readBody(req);
+    const s = load();
+    s.listings = (s.listings || []).map((x) => x.id === body.id ? { ...x, status: "pending_review", paidAt: Date.now() } : x);
+    save(s);
+    return send(res, 200, JSON.stringify({ ok: true }));
+  }
+  if (p === "/api/admin/login" && req.method === "POST") {
+    const body = await readBody(req);
+    const pin = process.env.ADMIN_PIN || "";
+    if (!pin || body.pin !== pin) return send(res, 401, JSON.stringify({ ok: false }));
+    return send(res, 200, JSON.stringify({ ok: true }));
+  }
+  if (p === "/api/admin/approve" && req.method === "POST") {
+    const body = await readBody(req);
+    if (!process.env.ADMIN_PIN || body.pin !== process.env.ADMIN_PIN) return send(res, 401, JSON.stringify({ ok: false }));
+    const s = load();
+    s.listings = (s.listings || []).map((x) => x.id === body.id ? { ...x, status: "live" } : x);
+    save(s);
+    return send(res, 200, JSON.stringify({ ok: true }));
+  }
+  if (p === "/api/admin/delete" && req.method === "POST") {
+    const body = await readBody(req);
+    if (!process.env.ADMIN_PIN || body.pin !== process.env.ADMIN_PIN) return send(res, 401, JSON.stringify({ ok: false }));
+    const s = load();
+    s.listings = (s.listings || []).filter((x) => x.id !== body.id);
+    save(s);
+    return send(res, 200, JSON.stringify({ ok: true }));
+  }
   if (p === "/api/listings/delete" && req.method === "POST") {
     const body = await readBody(req);
     const s = load();
@@ -243,6 +280,7 @@ const server = http.createServer(async (req, res) => {
     if (!u) return send(res, 401, JSON.stringify({ error: "bad" }));
     return send(res, 200, JSON.stringify({ name: u.name, phone: u.phone, role: u.role }));
   }
+
   let file = p === "/" ? "/index.html" : p;
   const name = path.basename(file);
   const tries = [
@@ -262,6 +300,7 @@ const server = http.createServer(async (req, res) => {
     send(res, 200, data, MIME[path.extname(full)] || "application/octet-stream");
   });
 });
+
 initDb().then(() => {
   server.listen(PORT, "0.0.0.0", () => {
     console.log("Ñande Yvy → http://localhost:" + PORT);
