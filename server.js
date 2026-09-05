@@ -246,8 +246,19 @@ const server = http.createServer(async (req, res) => {
   }
 
   let file = p === "/" ? "/index.html" : p;
-  const full = path.normalize(path.join(ROOT, file));
-  if (!full.startsWith(ROOT)) return send(res, 403, "forbidden", "text/plain");
+  const name = path.basename(file);
+  const tries = [
+    path.normalize(path.join(ROOT, file)),
+    path.join(ROOT, name),
+    path.join(ROOT, "img", name),
+    path.join(process.cwd(), file.replace(/^\//, "")),
+    path.join(process.cwd(), name),
+    path.join(process.cwd(), "img", name),
+    path.join(__dirname, name),
+    path.join(__dirname, "img", name),
+  ];
+  const full = tries.find((c) => fs.existsSync(c));
+  if (!full) return send(res, 404, "not found", "text/plain");
   fs.readFile(full, (err, data) => {
     if (err) return send(res, 404, "not found", "text/plain");
     send(res, 200, data, MIME[path.extname(full)] || "application/octet-stream");
