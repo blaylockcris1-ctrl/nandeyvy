@@ -206,7 +206,7 @@ function home() {
   return `
     <section class="hero"><div class="wrap">
       <h1>Tu tierra, en buenas manos.</h1>
-      <p>Ñande Yvy nace para que vender una casa en Paraguay no sea un grupo de Facebook eterno. Publicás, te vemos, y si querés, cerramos nosotros.</p>
+      <p>Ñande Yvy nace para que vender una casa en Paraguay no sea un cartel en la reja y mil mensajes en WhatsApp. Publicás, te vemos, y si querés, cerramos nosotros.</p>
       <form class="searchbox" onsubmit="event.preventDefault(); goSearch();">
         <select id="q-op"><option value="">Venta y alquiler</option><option value="sale">Venta</option><option value="rent">Alquiler</option></select>
         <select id="q-type"><option value="">Todo tipo</option><option value="casa">Casa</option><option value="depto">Departamento</option><option value="lote">Lote / terreno</option><option value="quinta">Quinta / campo</option></select>
@@ -342,6 +342,7 @@ function detail(id) {
            href="https://wa.me/${item.wa}?text=${msg}" target="_blank" rel="noopener">${item.who === "Ñande Yvy" ? "WhatsApp Ñande Yvy" : item.agent ? "WhatsApp " + item.agent : "WhatsApp al dueño"}</a>
         <button class="btn btn-line" style="width:100%;margin-top:8px" onclick="addLead('${item.id}')">Dejar consulta (lead)</button>
         <button class="btn btn-line" style="width:100%;margin-top:8px" onclick="toggleSave('${item.id}')">${savedIds().includes(item.id) ? "Guardado" : "Guardar aviso"}</button>
+        ${adminPin() || item.mine || String(item.id).startsWith("MIO-") ? `<button class="btn btn-line" style="width:100%;margin-top:8px" type="button" onclick="adminPin()?adminAct('delete','${item.id}'):deleteListing('${item.id}')">Borrar aviso</button>` : ""}
       </aside>
     </div>`;
 }
@@ -470,9 +471,9 @@ function nosotros() {
     <p class="lead">Nació de una idea simple: en este país la tierra es historia de familia, no un código en una app extranjera. Quisimos un lugar en castellano, con precio en Gs. y en dólares, y con alguien del otro lado del WhatsApp.</p>
     <div class="about-block">
       <h2>La historia que le contamos al que vende</h2>
-      <p>Vendés porque te mudás, porque heredaste, porque el negocio necesita liquidez. No porque te sobre el tiempo. El aviso gratis en Clasipar se llena de “sigue disponible?” a las 11 de la noche. El cartel en la reja se destiñe. El conocido “que conoce a alguien” nunca llama.</p>
+      <p>Vendés porque te mudás, porque heredaste, porque el negocio necesita liquidez. No porque te sobre el tiempo. El aviso suelto se llena de “¿sigue disponible?” a las 11 de la noche. El cartel en la reja se destiñe. El conocido “que conoce a alguien” nunca llama.</p>
       <p>Acá el aviso no es un grito al vacío. Tiene foto de la fachada, barrio, metros, y un número que responde. Si vos querés vender, pagás el aviso y hablás con el interesado. Si no querés atender más consultas, nos encargás la casa: visitamos, negociamos, y solo cobramos cuando hay escritura.</p>
-      <p>No te prometemos magia. Te prometemos que tu propiedad no se pierde entre mil lotes sin precio. Eso ya es más de lo que da un grupo de Facebook.</p>
+      <p>No te prometemos magia. Te prometemos que tu propiedad no se pierde entre mil lotes sin precio. Eso ya es más de lo que da un cartel en la vereda o un aviso que se pierde a la semana.</p>
     </div>
     <div class="about-block">
       <h2>A quién ayudamos</h2>
@@ -512,7 +513,7 @@ function account() {
     return `<div class="wizard">
       <h2>${s.name}</h2>
       <p class="meta">${s.role === "owner" ? "Dueño" : s.role === "agent" ? "Agente" : "Inmobiliaria"} · ${s.phone}</p>
-      <p style="margin:14px 0"><a href="#/publicar">Publicar</a> · <a href="#/oficina">Oficina</a> · <a href="#/leads">Leads</a> · <a href="#/mis">Mis avisos</a></p>
+      <p style="margin:14px 0"><a href="#/publicar">Publicar</a> · <a href="#/oficina">Oficina</a> · <a href="#/leads">Leads</a> · <a href="#/mis">Mis avisos</a> · <a href="#/admin"><strong>Admin</strong></a></p>
       <button class="btn btn-line" type="button" onclick="logoutUser()">Salir</button>
       <div class="field" style="margin-top:22px"><label>URL del servidor (Paraguay / USA)</label>
         <input id="api-url" placeholder="https://nandeyvy-xxxx.onrender.com" value="${localStorage.getItem("ny_api") || ""}">
