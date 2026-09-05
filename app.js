@@ -580,7 +580,7 @@ function saveListing() {
       return ag ? ag.name : "";
     })(),
     featured: document.querySelector("input[name=p-who]:checked").value === "broker",
-    mine: true, img: img || "img/q2.jpg",
+    mine: true, img: img || "q2.jpg",
     desc: $("#p-desc").value,
     wa: (function(){
       const role = document.querySelector("input[name=p-who]:checked").value;
@@ -599,7 +599,7 @@ function saveListing() {
   location.hash = "#/aviso/" + item.id;
   };
   const file = $("#p-photo") && $("#p-photo").files && $("#p-photo").files[0];
-  if (!file) return finish("img/q2.jpg");
+  if (!file) return finish("q2.jpg");
   const reader = new FileReader();
   reader.onload = async () => {
     const up = await api("/api/photo", { dataUrl: reader.result });
@@ -658,3 +658,4 @@ function render() {
 }
 window.addEventListener("hashchange", render);
 window.addEventListener("DOMContentLoaded", boot);
+
