@@ -20,17 +20,49 @@ function findSite() {
   return candidates[0];
 }
 const ROOT = findSite();
-const STORE = path.join(__dirname, "store.json");
+const STORE = process.env.STORE_PATH || path.join(__dirname, "store.json");
 console.log("site folder:", ROOT, "exists:", fs.existsSync(path.join(ROOT, "index.html")));
+console.log("store:", STORE);
 
 function empty() {
   return { listings: [], office: { name: "", city: "", agents: [] }, leads: [], users: [] };
 }
-function load() {
+let cache = empty();
+let pool = null;
+function load() { return cache; }
+function loadFile() {
   try { return { ...empty(), ...JSON.parse(fs.readFileSync(STORE, "utf8")) }; }
   catch { return empty(); }
 }
-function save(s) { fs.writeFileSync(STORE, JSON.stringify(s, null, 2)); }
+function save(s) {
+  cache = s;
+  try { fs.writeFileSync(STORE, JSON.stringify(s, null, 2)); } catch (e) { console.error("file save", e.message); }
+  if (pool) {
+    pool.query(
+      "INSERT INTO ny_store (id, data) VALUES (1, $1) ON CONFLICT (id) DO UPDATE SET data = $1",
+      [s]
+    ).catch((e) => console.error("db save", e.message));
+  }
+}
+async function initDb() {
+  cache = loadFile();
+  if (!process.env.DATABASE_URL) {
+    console.log("no DATABASE_URL — using store.json only");
+    return;
+  }
+  try {
+    const { Pool } = require("pg");
+    pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+    await pool.query("CREATE TABLE IF NOT EXISTS ny_store (id int PRIMARY KEY, data jsonb)");
+    const r = await pool.query("SELECT data FROM ny_store WHERE id = 1");
+    if (r.rows[0] && r.rows[0].data) cache = { ...empty(), ...r.rows[0].data };
+    else await pool.query("INSERT INTO ny_store (id, data) VALUES (1, $1) ON CONFLICT (id) DO NOTHING", [cache]);
+    console.log("postgres connected, listings:", cache.listings.length);
+  } catch (e) {
+    console.error("postgres init failed, using file:", e.message);
+    pool = null;
+  }
+}
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
@@ -73,6 +105,9 @@ const server = http.createServer(async (req, res) => {
     return res.end();
   }
 
+  if (p === "/api/health" && req.method === "GET") {
+    return send(res, 200, JSON.stringify({ ok: true, listings: load().listings.length }));
+  }
   if (p === "/api/state" && req.method === "GET") {
     return send(res, 200, JSON.stringify(load()));
   }
@@ -124,6 +159,8 @@ const server = http.createServer(async (req, res) => {
   });
 });
 
-server.listen(PORT, "0.0.0.0", () => {
-  console.log("Ñande Yvy → http://localhost:" + PORT);
+initDb().then(() => {
+  server.listen(PORT, "0.0.0.0", () => {
+    console.log("Ñande Yvy → http://localhost:" + PORT);
+  });
 });
