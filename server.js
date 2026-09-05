@@ -194,6 +194,13 @@ const server = http.createServer(async (req, res) => {
       send(res, 200, data, MIME[ext] || "application/octet-stream");
     });
   }
+  if (p === "/api/listings/delete" && req.method === "POST") {
+    const body = await readBody(req);
+    const s = load();
+    s.listings = (s.listings || []).filter((x) => x.id !== body.id);
+    save(s);
+    return send(res, 200, JSON.stringify({ ok: true, id: body.id }));
+  }
   if (p === "/api/listings" && req.method === "POST") {
     const item = await readBody(req);
     const s = load();
