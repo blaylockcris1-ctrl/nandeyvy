@@ -7,7 +7,7 @@ const LISTINGS = [
     price: 285000, currency: "USD",
     land: 420, built: 280, beds: 4, baths: 3, parking: 2,
     legal: "Escritura", who: "Ñande Yvy", featured: true,
-    img: "img/h1.jpg",
+    img: "h1.jpg",
     desc: "Casa de hormigón y acero con galería perimetral, quincho y jardín. A 4 cuadras de Shopping del Sol.",
     wa: "595981000001"
   },
@@ -18,7 +18,7 @@ const LISTINGS = [
     price: 168000, currency: "USD",
     land: 360, built: 210, beds: 3, baths: 2, parking: 2,
     legal: "Escritura", who: "Ñande Yvy", featured: true,
-    img: "img/h3.jpg",
+    img: "h3.jpg",
     desc: "Vivienda nueva, portón automático y patio posterior. Publicada por el propietario.",
     wa: "595981000002"
   },
@@ -29,7 +29,7 @@ const LISTINGS = [
     price: 750, currency: "USD", period: "mes",
     land: 0, built: 86, beds: 2, baths: 2, parking: 1,
     legal: "Contrato", who: "Ñande Yvy", featured: false,
-    img: "img/a1.jpg",
+    img: "a1.jpg",
     desc: "Edificio con amenities. Acepta mascotas chicas. Expensas Gs. 850.000.",
     wa: "595981000003"
   },
@@ -40,7 +40,7 @@ const LISTINGS = [
     price: 450000000, currency: "PYG",
     land: 360, built: 0, beds: 0, baths: 0, parking: 0,
     legal: "Escritura", who: "Ñande Yvy", featured: true,
-    img: "img/q2.jpg",
+    img: "q2.jpg",
     desc: "Lote limpio, servicios en frente. Ideal vivienda o pequeño depósito.",
     wa: "595981000004"
   },
@@ -51,7 +51,7 @@ const LISTINGS = [
     price: 210000, currency: "USD",
     land: 5000, built: 140, beds: 3, baths: 2, parking: 3,
     legal: "Escritura", who: "Ñande Yvy", featured: false,
-    img: "img/q1.jpg",
+    img: "q1.jpg",
     desc: "Quinta con monte nativo, pozo y quincho. 55 min de Asunción.",
     wa: "595981000005"
   },
@@ -62,7 +62,7 @@ const LISTINGS = [
     price: 145000, currency: "USD",
     land: 300, built: 168, beds: 3, baths: 2, parking: 1,
     legal: "Boleto", who: "Ñande Yvy", featured: false,
-    img: "img/h2.jpg",
+    img: "h2.jpg",
     desc: "Cerca de la costanera. Boleto de compraventa al día; escritura en 45 días.",
     wa: "595981000006"
   },
@@ -73,7 +73,7 @@ const LISTINGS = [
     price: 4500000, currency: "PYG", period: "mes",
     land: 280, built: 150, beds: 3, baths: 2, parking: 1,
     legal: "Contrato", who: "Ñande Yvy", featured: false,
-    img: "img/h3.jpg",
+    img: "h3.jpg",
     desc: "Patio y lavadero. No amoblada. Garantía: depósito + fiador.",
     wa: "595981000007"
   },
@@ -84,7 +84,7 @@ const LISTINGS = [
     price: 198000, currency: "USD",
     land: 0, built: 128, beds: 3, baths: 2, parking: 2,
     legal: "En pozo", who: "Ñande Yvy", featured: true,
-    img: "img/a1.jpg",
+    img: "a1.jpg",
     desc: "Entrega estimada 2028. Cuotas en dólares. Amenities y 2 cocheras.",
     wa: "595981000008"
   },
@@ -95,7 +95,7 @@ const LISTINGS = [
     price: 125000, currency: "USD",
     land: 320, built: 160, beds: 3, baths: 2, parking: 1,
     legal: "Escritura", who: "Ñande Yvy", featured: false,
-    img: "img/h2.jpg",
+    img: "h2.jpg",
     desc: "Casa de un piso, patio y quincho. Cerca de la Costanera de Lambaré.",
     wa: "595981000009"
   },
@@ -106,7 +106,7 @@ const LISTINGS = [
     price: 18000000, currency: "PYG",
     land: 360, built: 0, beds: 0, baths: 0, parking: 0,
     legal: "Boleto", who: "Ñande Yvy", featured: false,
-    img: "img/q2.jpg",
+    img: "q2.jpg",
     desc: "Cuota en guaraníes. Energía en frente. Escritura al cancelar.",
     wa: "595981000010"
   }
