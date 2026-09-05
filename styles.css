@@ -113,7 +113,7 @@ button, input, select, textarea { font: inherit; }
 .kicker { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--gold); }
 .notice { background: #efe6d2; border-radius: 12px; padding: 10px 12px; font-size: 13px; margin: 12px 0; }
 
-.wizard { max-width: 720px; margin: 24px auto 60px; background: var(--white); border: 1px solid var(--line); border-radius: 20px; padding: 28px; }
+.wizard { max-width: 720px; margin: 24px auto 120px; background: var(--white); border: 1px solid var(--line); border-radius: 20px; padding: 28px 28px 36px; }
 .steps { display: flex; gap: 8px; margin-bottom: 22px; }
 .steps span { flex: 1; height: 6px; background: var(--line); border-radius: 99px; }
 .steps span.on { background: var(--teal); }
@@ -144,7 +144,17 @@ button, input, select, textarea { font: inherit; }
   text-align: center; font-size: 11px; font-weight: 600; color: var(--ink-soft); padding: 8px 4px;
 }
 .tabbar a.tab-plus { color: var(--teal-d); }
-body { padding-bottom: 64px; }
+body { padding-bottom: 88px; }
+#app { padding-bottom: 24px; }
+.btn { white-space: nowrap; line-height: 1.2; }
+.top-inner { flex-wrap: wrap; height: auto; min-height: 68px; padding: 8px 0; }
+.plan { grid-template-columns: 22px 1fr; }
+.plan input { margin-top: 3px; }
+@media (min-width: 901px) {
+  .tabbar { display: none; }
+  body { padding-bottom: 24px; }
+}
+
 .proto-note {
   background: #1b160c; color: #f3e7c8; font-size: 12px; text-align: center; padding: 8px;
 }
