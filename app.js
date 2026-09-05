@@ -26,12 +26,15 @@ async function boot() {
 }
 
 function fmtPrice(item) {
-  if (item.currency === "USD") {
-    const gs = Math.round(item.price * FX);
-    return { main: `USD ${item.price.toLocaleString("en-US")}`, sub: `≈ Gs. ${gs.toLocaleString("es-PY")}` };
+  let gs, usd;
+  if ((item.currency || "PYG") === "USD") {
+    usd = Number(item.price) || 0;
+    gs = Math.round(usd * FX);
+  } else {
+    gs = Number(item.price) || 0;
+    usd = Math.round(gs / FX);
   }
-  const usd = Math.round(item.price / FX);
-  return { main: `Gs. ${item.price.toLocaleString("es-PY")}`, sub: `≈ USD ${usd.toLocaleString("en-US")}` };
+  return { main: "Gs. " + gs.toLocaleString("es-PY"), sub: "≈ USD " + usd.toLocaleString("en-US") };
 }
 
 function typeLabel(t) {
@@ -235,7 +238,7 @@ function home() {
           <a class="btn btn-dark" href="#/nosotros">Nuestra historia</a>
         </div>
         <div class="story-points">
-          <div><strong>Dueño</strong><span>Un aviso claro por USD 12. Vos atendés el WhatsApp.</span></div>
+          <div><strong>Dueño</strong><span>Un aviso claro por Gs. 87.600 (USD 12). Vos atendés el WhatsApp.</span></div>
           <div><strong>Inmobiliaria</strong><span>Tu equipo carga casas en todo el país, sin que te cobremos la venta.</span></div>
           <div><strong>Exclusiva</strong><span>Si nos encargás la casa, la visitamos y cobramos 5% solo al firmar.</span></div>
         </div>
@@ -335,7 +338,7 @@ function detail(id) {
       </div>
       <aside class="side">
         <div class="price">${p.main}${period}</div>
-        <div class="meta">${p.sub} · tipo de cambio prototipo Gs. ${FX}</div>
+        <div class="meta">${p.sub} · ref. Gs. ${FX} = USD 1 · se muestra primero en guaraníes</div>
         <p style="margin:12px 0 4px"><strong>${item.who}</strong>${item.agent ? " · " + item.agent : ""} · ${item.legal}</p>
         ${item.mode === "broker" ? `<div class="notice">Exclusiva Ñande Yvy: nosotros visitamos, negociamos y cobramos comisión al cierre (5% venta / 1 mes de alquiler).</div>` : ""}
         <a class="btn btn-wa" style="display:block;text-align:center;margin-top:14px"
@@ -361,10 +364,10 @@ function publish() {
       <p class="meta" style="margin-bottom:16px">Sesión: ${session().name}. <a href="#/planes">Planes</a>. El 5% solo si Ñande Yvy cierra.</p>
       <div class="plans">
         <label class="plan"><input type="radio" name="p-who" value="owner" checked>
-          <strong>Dueño · USD 12 / 30 días</strong>
+          <strong>Dueño · Gs. 87.600 / 30 días</strong>
           <span>Tu WhatsApp. Sin comisión.</span></label>
         <label class="plan"><input type="radio" name="p-who" value="agency">
-          <strong>Inmobiliaria · USD 49 / mes</strong>
+          <strong>Inmobiliaria · Gs. 357.700 / mes</strong>
           <span>Hasta 30 avisos y 8 agentes. Sin comisión en tus ventas.</span></label>
         <label class="plan"><input type="radio" name="p-who" value="broker">
           <strong>Que venda Ñande Yvy · 5%</strong>
@@ -393,7 +396,7 @@ function publish() {
       </div>
       <div class="row2">
         <div class="field"><label>Precio</label><input id="p-price" type="number" min="1" required placeholder="185000" oninput="showFx()"></div>
-        <div class="field"><label>Moneda</label><select id="p-cur" onchange="showFx()"><option value="USD">USD</option><option value="PYG">Gs. (PYG)</option></select></div>
+        <div class="field"><label>Moneda</label><select id="p-cur" onchange="showFx()"><option value="PYG">Gs. (PYG)</option><option value="USD">USD</option></select></div>
       </div>
       <p class="meta" id="fx-hint">El aviso muestra USD y guaraníes (ref. Gs. 7.300 = USD 1).</p>
       <div class="row2" style="display:none">
@@ -416,7 +419,7 @@ function officeView() {
   const o = office();
   return `<div class="wizard">
     <h2>Oficina</h2>
-    <p class="meta" style="margin-bottom:14px">Plan Oficina USD 49 / mes. Si abrís el sitio con node server.js, la oficina se comparte.</p>
+    <p class="meta" style="margin-bottom:14px">Plan Oficina Gs. 357.700 / mes. Si abrís el sitio con node server.js, la oficina se comparte.</p>
     <div class="field"><label>Nombre de la inmobiliaria</label>
       <input id="o-name" value="${o.name || ""}" placeholder="Inmobiliaria López"></div>
     <div class="field"><label>Ciudad base</label>
@@ -483,7 +486,7 @@ function nosotros() {
     </div>
     <div class="about-block">
       <h2>Cómo cobramos</h2>
-      <p>Dueño: USD 12 el aviso (se ve también en guaraníes). Oficina: USD 49 al mes. Si Ñande Yvy vende: 5% al cierre. Buscar es gratis. Sin letra chica escondida en otro idioma.</p>
+      <p>Dueño: Gs. 87.600 el aviso (USD 12). Oficina: Gs. 357.700 al mes (USD 49). Si Ñande Yvy vende: 5% al cierre. Buscar es gratis.</p>
     </div>
     <a class="btn btn-gold" href="#/publicar">Publicar mi propiedad</a>
     <a class="btn btn-line" href="#/planes">Ver planes</a>
