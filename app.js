@@ -422,6 +422,369 @@ function officeView() {
   </div>`;
 }
 
+function deleteListing(id) {
+  if (!confirm("¿Borrar este aviso?")) return;
+  const next = mine().filter((x) => x.id !== id);
+  localStorage.setItem("ny_mine", JSON.stringify(next));
+  REMOTE.listings = (REMOTE.listings || []).filter((x) => x.id !== id);
+  api("/api/listings/delete", { id });
+  location.hash = "#/mis";
+  render();
+}
+function myAds() {
+  const rows = mine();
+  return `<div class="wrap" style="padding:24px 0 80px">
+    <h2>Mis avisos</h2>
+    <p class="meta" style="margin:8px 0 16px">${rows.length} publicados · tocá Borrar en el que sea de prueba</p>
+    <div class="grid">${rows.map(l => `<div>${cardHTML(l)}<button class="btn btn-line" style="margin:8px 0 16px" type="button" onclick="deleteListing('${l.id}')">Borrar</button></div>`).join("") || "<p>Todavía no publicaste. <a href='#/publicar'>Cargar el primero</a>.</p>"}</div>
+  </div>`;
+}
+
+function savedView() {
+  const rows = allListings().filter(l => savedIds().includes(l.id));
+  return `<div class="wrap" style="padding:24px 0 80px">
+    <h2>Guardados</h2>
+    <div class="grid">${rows.map(cardHTML).join("") || "<p>Todavía no guardaste avisos.</p>"}</div>
+  </div>`;
+}
+
+function nosotros() {
+  return `<div class="wrap about">
+    <p class="kicker">Nosotros</p>
+    <h1>Ñande Yvy no nació en un edificio de vidrio.</h1>
+    <p class="lead">Nació de una idea simple: en este país la tierra es historia de familia, no un código en una app extranjera. Quisimos un lugar en castellano, con precio en Gs. y en dólares, y con alguien del otro lado del WhatsApp.</p>
+    <div class="about-block">
+      <h2>La historia que le contamos al que vende</h2>
+      <p>Vendés porque te mudás, porque heredaste, porque el negocio necesita liquidez. No porque te sobre el tiempo. El aviso gratis en Clasipar se llena de “sigue disponible?” a las 11 de la noche. El cartel en la reja se destiñe. El conocido “que conoce a alguien” nunca llama.</p>
+      <p>Acá el aviso no es un grito al vacío. Tiene foto de la fachada, barrio, metros, y un número que responde. Si vos querés vender, pagás el aviso y hablás con el interesado. Si no querés atender más consultas, nos encargás la casa: visitamos, negociamos, y solo cobramos cuando hay escritura.</p>
+      <p>No te prometemos magia. Te prometemos que tu propiedad no se pierde entre mil lotes sin precio. Eso ya es más de lo que da un grupo de Facebook.</p>
+    </div>
+    <div class="about-block">
+      <h2>A quién ayudamos</h2>
+      <p><strong>Al particular</strong> que tiene una casa en Luque o un lote en Caaguazú y no sabe por dónde empezar.</p>
+      <p><strong>A la inmobiliaria</strong> de Encarnación o CDE que necesita un escaparate nacional sin entregarnos su comisión.</p>
+      <p><strong>Al que busca</strong> y está cansado de fotos de 2019 y precios “a convenir”.</p>
+    </div>
+    <div class="about-block">
+      <h2>Cómo cobramos</h2>
+      <p>Dueño: USD 12 el aviso (se ve también en guaraníes). Oficina: USD 49 al mes. Si Ñande Yvy vende: 5% al cierre. Buscar es gratis. Sin letra chica escondida en otro idioma.</p>
+    </div>
+    <a class="btn btn-gold" href="#/publicar">Publicar mi propiedad</a>
+    <a class="btn btn-line" href="#/planes">Ver planes</a>
+  </div>`;
+}
+
+function planes() {
+  return `<div class="wrap" style="padding:24px 0 80px;max-width:720px">
+    <h2>Planes</h2>
+    <p class="meta" style="margin:8px 0 18px">Buscar y guardar avisos es gratis siempre.</p>
+    <div class="plans">
+      <div class="plan"><strong>Dueño</strong><span>USD 12 · 30 días · 1 aviso · tu WhatsApp · 0% comisión</span></div>
+      <div class="plan"><strong>Oficina Starter</strong><span>USD 29 / mes · 12 avisos · 3 agentes · 0% sobre tus cierres</span></div>
+      <div class="plan"><strong>Oficina</strong><span>USD 49 / mes · 30 avisos · 8 agentes · aviso extra USD 4</span></div>
+      <div class="plan"><strong>Ñande Yvy vende</strong><span>5% al cierre (venta) o 1 mes de alquiler · nosotros atendemos</span></div>
+    </div>
+    <p class="meta">Oficina nueva: 5 avisos gratis por 30 días para cargar inventario. Después entra el plan.</p>
+    <p class="meta">Co-broke opcional (50/50 del 5%) solo si ellos quieren tu comprador.</p>
+    <a class="btn btn-dark" href="#/publicar">Cargar un aviso</a>
+    <p class="meta" style="margin-top:16px"><a href="/api/state" target="_blank">Descargar copia de avisos (JSON)</a></p>
+  </div>`;
+}
+
+function account() {
+  const s = session();
+  if (s) {
+    return `<div class="wizard">
+      <h2>${s.name}</h2>
+      <p class="meta">${s.role === "owner" ? "Dueño" : s.role === "agent" ? "Agente" : "Inmobiliaria"} · ${s.phone}</p>
+      <p style="margin:14px 0"><a href="#/publicar">Publicar</a> · <a href="#/oficina">Oficina</a> · <a href="#/leads">Leads</a> · <a href="#/mis">Mis avisos</a></p>
+      <button class="btn btn-line" type="button" onclick="logoutUser()">Salir</button>
+      <div class="field" style="margin-top:22px"><label>URL del servidor (Paraguay / USA)</label>
+        <input id="api-url" placeholder="https://nandeyvy-xxxx.onrender.com" value="${localStorage.getItem("ny_api") || ""}">
+      </div>
+      <button class="btn btn-dark" type="button" onclick="saveApiUrl()">Guardar servidor</button>
+    </div>`;
+  }
+  return `<div class="wizard">
+    <h2>Entrar</h2>
+    <p class="meta">Si estás en otro país, pegá acá la URL pública del servidor.</p>
+    <div class="field"><label>URL del servidor</label>
+      <input id="api-url" placeholder="https://nandeyvy-xxxx.onrender.com" value="${localStorage.getItem("ny_api") || ""}"></div>
+    <button class="btn btn-line" type="button" onclick="saveApiUrl()">Guardar servidor</button>
+    <p class="meta">PIN en este navegador. En producción: OTP por SMS.</p>
+    <div class="field"><label>Teléfono</label><input id="l-phone" placeholder="595981123456"></div>
+    <div class="field"><label>PIN</label><input id="l-pin" type="password" maxlength="6"></div>
+    <button class="btn btn-dark" type="button" onclick="loginUser()">Entrar</button>
+    <h2 style="margin-top:28px">Crear cuenta</h2>
+    <div class="field"><label>Nombre</label><input id="r-name" placeholder="Ana Benítez"></div>
+    <div class="field"><label>Teléfono</label><input id="r-phone" placeholder="595981123456"></div>
+    <div class="field"><label>PIN (4 dígitos)</label><input id="r-pin" maxlength="6"></div>
+    <div class="field"><label>Rol</label>
+      <select id="r-role">
+        <option value="owner">Dueño</option>
+        <option value="agency">Dueño de inmobiliaria</option>
+        <option value="agent">Agente</option>
+      </select>
+    </div>
+    <button class="btn btn-gold" type="button" onclick="registerUser()">Crear y entrar</button>
+  </div>`;
+}
+
+function leadsView() {
+  const rows = leads();
+  return `<div class="wrap" style="padding:24px 0 80px;max-width:720px">
+    <h2>Leads</h2>
+    <p class="meta">Consultas hechas desde la ficha (este navegador).</p>
+    ${rows.map(l => `<div class="plan" style="margin:10px 0"><strong>${l.title}</strong><span>Para ${l.to} · ${l.at} · <a href="https://wa.me/${l.wa}" target="_blank">WhatsApp</a></span></div>`).join("") || "<p class='meta'>Todavía no hay consultas.</p>"}
+  </div>`;
+}
+
+function showFx() {
+  const n = Number($("#p-price")?.value || 0);
+  const c = $("#p-cur")?.value || "USD";
+  const el = $("#fx-hint");
+  if (!el || !n) return;
+  if (c === "USD") el.textContent = "USD " + n.toLocaleString("en-US") + "  ·  ≈ Gs. " + Math.round(n * FX).toLocaleString("es-PY");
+  else el.textContent = "Gs. " + n.toLocaleString("es-PY") + "  ·  ≈ USD " + Math.round(n / FX).toLocaleString("en-US");
+}
+
+async function startPay(plan) {
+  const r = await api("/api/pay", { plan: plan || "usd12" });
+  if (!r) { alert("No se pudo iniciar el pago."); return; }
+  sessionStorage.setItem("ny_pay", JSON.stringify(r));
+  location.hash = "#/pagar";
+}
+
+function payView() {
+  let info = {};
+  try { info = JSON.parse(sessionStorage.getItem("ny_pay") || "{}"); } catch {}
+  return `<div class="wizard">
+    <h2>Pagar aviso</h2>
+    <p>USD ${info.usd || 12}  ·  Gs. ${Number(info.pyg || 87600).toLocaleString("es-PY")}</p>
+    <p class="meta">${info.demo ? "Bancard no habilitado todavía. Pago simulado." : "Bancard vPOS"}</p>
+    <div style="min-height:80px;margin:16px 0">${info.demo ? "Cuando Bancard te dé las claves, el iframe de tarjeta sale acá." : "Checkout Bancard iniciado."}</div>
+    <button class="btn btn-dark" type="button" onclick="location.hash='#/publicar'">Continuar</button>
+    <p class="meta" style="margin-top:18px">Dominio: NIC Paraguay → nandeyvy.com.py → Render Custom Domain.</p>
+  </div>`;
+}
+
+function saveListing() {
+  const finish = (img) => {
+  const item = {
+    id: "MIO-" + Date.now().toString().slice(-6),
+    op: $("#p-op").value, type: $("#p-type").value,
+    title: $("#p-title").value,
+    city: $("#p-city").value, barrio: $("#p-barrio").value, dept: $("#p-city").value,
+    price: Number($("#p-price").value), currency: $("#p-cur").value,
+    land: Number($("#p-land").value) || 0, built: Number($("#p-built").value) || 0,
+    beds: 0, baths: 0, parking: 0, legal: "Boleto",
+    role: document.querySelector("input[name=p-who]:checked").value,
+    plan: ({ owner: "usd12", agency: "oficina49", broker: "exclusiva5" })[document.querySelector("input[name=p-who]:checked").value],
+    who: document.querySelector("input[name=p-who]:checked").value === "broker" ? "Ñande Yvy"
+      : (document.querySelector("input[name=p-who]:checked").value === "agency" ? ($("#p-office").value || office().name || "Inmobiliaria") : "Dueño"),
+    agent: (function(){
+      const role = document.querySelector("input[name=p-who]:checked").value;
+      if (role !== "agency") return "";
+      const ag = office().agents.find(a => a.id === $("#p-agent")?.value);
+      return ag ? ag.name : "";
+    })(),
+    featured: document.querySelector("input[name=p-who]:checked").value === "broker",
+    mine: true, img: img || "q2.jpg",
+    desc: $("#p-desc").value,
+    wa: (function(){
+      const role = document.querySelector("input[name=p-who]:checked").value;
+      if (role === "broker") return "595981000000";
+      if (role === "agency") {
+        const ag = office().agents.find(a => a.id === $("#p-agent")?.value);
+        return ag ? ag.wa : ($("#p-wa").value.replace(/\D/g, ""));
+      }
+      return $("#p-wa").value.replace(/\D/g, "");
+    })()
+  };
+  const next = [item, ...mine().filter((x) => x.id !== item.id)];
+  localStorage.setItem("ny_mine", JSON.stringify(next));
+  REMOTE.listings = next;
+  api("/api/listings", item);
+  location.hash = "#/aviso/" + item.id;
+  };
+  const file = $("#p-photo") && $("#p-photo").files && $("#p-photo").files[0];
+  if (!file) return finish("q2.jpg");
+  const reader = new FileReader();
+  reader.onload = async () => {
+    const up = await api("/api/photo", { dataUrl: reader.result });
+    finish((up && up.url) || reader.result);
+  };
+  reader.readAsDataURL(file);
+}
+
+function toggleSave(id) {
+  const s = new Set(savedIds());
+  if (s.has(id)) s.delete(id); else s.add(id);
+  localStorage.setItem("ny_saved", JSON.stringify([...s]));
+  render();
+}
+
+function goSearch() {
+  const op = $("#q-op")?.value || "";
+  const type = $("#q-type")?.value || "";
+  const city = $("#q-city")?.value || "";
+  location.hash = `#/buscar?op=${op}&type=${type}&city=${encodeURIComponent(city)}`;
+}
+function quick(op, type, city = "") {
+  location.hash = `#/buscar?op=${op}&type=${type}&city=${encodeURIComponent(city)}`;
+}
+function applyFilters() {
+  const op = $("#f-op").value, type = $("#f-type").value, city = $("#f-city").value;
+  location.hash = `#/buscar?op=${op}&type=${type}&city=${encodeURIComponent(city)}`;
+}
+
+function render() {
+  const hash = location.hash || "#/";
+  const [path, ] = hash.slice(1).split("?");
+  const parts = path.split("/").filter(Boolean);
+  let html = "";
+  if (parts[0] === "buscar") html = searchView();
+  else if (parts[0] === "aviso") html = detail(parts[1]);
+  else if (parts[0] === "publicar") html = publish();
+  else if (parts[0] === "mis") html = myAds();
+  else if (parts[0] === "guardados") html = savedView();
+  else if (parts[0] === "cuenta") html = account();
+  else if (parts[0] === "nosotros") html = nosotros();
+  else if (parts[0] === "planes") html = planes();
+  else if (parts[0] === "oficina") html = officeView();
+  else if (parts[0] === "leads") html = leadsView();
+  else if (parts[0] === "pagar") html = payView();
+  else html = home();
+  $("#app").innerHTML = html;
+  document.querySelectorAll("input[name=p-who]").forEach((r) => {
+    r.addEventListener("change", () => {
+      const w = document.getElementById("agency-name-wrap");
+      if (w) w.style.display = document.querySelector("input[name=p-who]:checked").value === "agency" ? "block" : "none";
+    });
+  });
+  refreshNav();
+  window.scrollTo(0, 0);
+}
+window.addEventListener("hashchange", render);
+window.addEventListener("DOMContentLoaded", boot);
+  const item = allListings().find(l => l.id === id);
+  if (!item) return `<div class="wrap"><p>Aviso no encontrado.</p></div>`;
+  const p = fmtPrice(item);
+  const period = item.period ? ` / ${item.period}` : "";
+  const msg = encodeURIComponent(`Hola, vi el aviso ${item.id} (${item.title}) en Ñande Yvy y quiero más datos.`);
+  return `
+    <div class="wrap detail">
+      <div>
+        <div class="gallery" style="background-image:url('${item.img}')"></div>
+        <p class="kicker" style="margin-top:18px">${item.op === "sale" ? "Venta" : "Alquiler"} · ${typeLabel(item.type)} · ${item.id}</p>
+        <h1 style="font-family:'Source Serif 4',serif;font-size:36px;margin:6px 0 10px">${item.title}</h1>
+        <p class="meta">${item.barrio}, ${item.city} · ${item.dept}</p>
+        <p style="margin:16px 0;line-height:1.6;color:var(--ink-soft)">${item.desc}</p>
+        <div class="specs">
+          ${item.beds ? `<span>${item.beds} dormitorios</span>` : ""}
+          ${item.baths ? `<span>${item.baths} baños</span>` : ""}
+          ${item.built ? `<span>${item.built} m² construidos</span>` : ""}
+          ${item.land ? `<span>${item.land} m² terreno</span>` : ""}
+        </div>
+        <div class="notice">Ñande Yvy no certifica título. Pedí a tu escribano: escritura, libertad de gravamen, certificado catastral/RUN e impuesto municipal al día.</div>
+      </div>
+      <aside class="side">
+        <div class="price">${p.main}${period}</div>
+        <div class="meta">${p.sub} · tipo de cambio prototipo Gs. ${FX}</div>
+        <p style="margin:12px 0 4px"><strong>${item.who}</strong>${item.agent ? " · " + item.agent : ""} · ${item.legal}</p>
+        ${item.mode === "broker" ? `<div class="notice">Exclusiva Ñande Yvy: nosotros visitamos, negociamos y cobramos comisión al cierre (5% venta / 1 mes de alquiler).</div>` : ""}
+        <a class="btn btn-wa" style="display:block;text-align:center;margin-top:14px"
+           href="https://wa.me/${item.wa}?text=${msg}" target="_blank" rel="noopener">${item.who === "Ñande Yvy" ? "WhatsApp Ñande Yvy" : item.agent ? "WhatsApp " + item.agent : "WhatsApp al dueño"}</a>
+        <button class="btn btn-line" style="width:100%;margin-top:8px" onclick="addLead('${item.id}')">Dejar consulta (lead)</button>
+        <button class="btn btn-line" style="width:100%;margin-top:8px" onclick="toggleSave('${item.id}')">${savedIds().includes(item.id) ? "Guardado" : "Guardar aviso"}</button>
+      </aside>
+    </div>`;
+}
+
+function publish() {
+  return `
+    <form class="wizard" onsubmit="event.preventDefault(); saveListing();">
+      <h2>Publicar</h2>
+      <p class="meta" style="margin-bottom:16px"><a href="#/planes">Ver planes</a>. El 5% solo si Ñande Yvy cierra.</p>
+      <div class="plans">
+        <label class="plan"><input type="radio" name="p-who" value="owner" checked>
+          <strong>Dueño · USD 12 / 30 días</strong>
+          <span>Tu WhatsApp. Sin comisión.</span></label>
+        <label class="plan"><input type="radio" name="p-who" value="agency">
+          <strong>Inmobiliaria · USD 49 / mes</strong>
+          <span>Hasta 30 avisos y 8 agentes. Sin comisión en tus ventas.</span></label>
+        <label class="plan"><input type="radio" name="p-who" value="broker">
+          <strong>Que venda Ñande Yvy · 5%</strong>
+          <span>Nosotros hablamos con el comprador. 5% al firmar la escritura.</span></label>
+      </div>
+      <div class="field" id="agency-name-wrap" style="display:none">
+        <label>Inmobiliaria</label>
+        <input id="p-office" placeholder="Inmobiliaria López" value="${office().name || ""}">
+        <label style="margin-top:10px">Agente que atiende</label>
+        <select id="p-agent">
+          <option value="">Elegí agente (cargalos en Oficina)</option>
+          ${office().agents.map(a => `<option value="${a.id}">${a.name} · ${a.wa}</option>`).join("")}
+        </select>
+        <p class="meta"><a href="#/oficina">Cargar agentes en Oficina</a></p>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Operación</label>
+          <select id="p-op"><option value="sale">Venta</option><option value="rent">Alquiler</option></select></div>
+        <div class="field"><label>Tipo</label>
+          <select id="p-type"><option value="casa">Casa</option><option value="depto">Departamento</option><option value="lote">Lote / terreno</option><option value="quinta">Quinta</option></select></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Ciudad</label>
+          <select id="p-city"><option>Asunción</option><option>Luque</option><option>Lambaré</option><option>San Lorenzo</option><option>Capiatá</option><option>Fernando de la Mora</option><option>Ciudad del Este</option><option>Presidente Franco</option><option>Encarnación</option><option>Altos</option><option>Caaguazú</option><option>Coronel Oviedo</option><option>Pedro Juan Caballero</option><option>Concepción</option><option>Villarrica</option><option>Pilar</option></select></div>
+        <div class="field"><label>Barrio</label><input id="p-barrio" placeholder="Villa Morra" required></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Precio</label><input id="p-price" type="number" min="1" required placeholder="185000" oninput="showFx()"></div>
+        <div class="field"><label>Moneda</label><select id="p-cur" onchange="showFx()"><option value="USD">USD</option><option value="PYG">Gs. (PYG)</option></select></div>
+      </div>
+      <p class="meta" id="fx-hint">El aviso muestra USD y guaraníes (ref. Gs. 7.300 = USD 1).</p>
+      <div class="row2" style="display:none">
+      </div>
+      <div class="row2">
+        <div class="field"><label>m² terreno</label><input id="p-land" type="number" value="0"></div>
+        <div class="field"><label>m² construido</label><input id="p-built" type="number" value="0"></div>
+      </div>
+      <div class="field"><label>Título</label><input id="p-title" required placeholder="Casa 3 dorm. en Luque"></div>
+      <div class="field"><label>WhatsApp</label><input id="p-wa" required placeholder="595981123456"></div>
+      <div class="field"><label>Foto de la fachada</label>
+        <input id="p-photo" type="file" accept="image/*"></div>
+      <div class="field"><label>Descripción</label><textarea id="p-desc" rows="4" required></textarea></div>
+      <button class="btn btn-dark" type="submit">Publicar</button>
+      <button class="btn btn-gold" type="button" onclick="startPay((document.querySelector('input[name=p-who]:checked')||{}).value==='agency'?'oficina49':'usd12')">Pagar Bancard (USD y Gs.)</button>
+    </form>`;
+}
+
+function officeView() {
+  const o = office();
+  return `<div class="wizard">
+    <h2>Oficina</h2>
+    <p class="meta" style="margin-bottom:14px">Plan Oficina USD 49 / mes. Si abrís el sitio con node server.js, la oficina se comparte.</p>
+    <div class="field"><label>Nombre de la inmobiliaria</label>
+      <input id="o-name" value="${o.name || ""}" placeholder="Inmobiliaria López"></div>
+    <div class="field"><label>Ciudad base</label>
+      <input id="o-city" value="${o.city || ""}" placeholder="Encarnación"></div>
+    <button class="btn btn-dark" type="button" onclick="saveOfficeForm()">Guardar oficina</button>
+    <h2 style="margin-top:28px">Agentes</h2>
+    <p class="meta">${o.agents.length} de 8</p>
+    <div style="margin:12px 0">${o.agents.map(a => `
+      <div class="plan" style="margin-bottom:8px">
+        <strong>${a.name}</strong>
+        <span>${a.wa} · <a href="#" onclick="event.preventDefault();removeAgent('${a.id}')">Quitar</a></span>
+      </div>`).join("") || "<p class='meta'>Todavía no hay agentes.</p>"}</div>
+    <div class="row2">
+      <div class="field"><label>Nombre del agente</label><input id="a-name" placeholder="Ana Benítez"></div>
+      <div class="field"><label>WhatsApp</label><input id="a-wa" placeholder="595981123456"></div>
+    </div>
+    <button class="btn btn-gold" type="button" onclick="addAgent()">Agregar agente</button>
+    <p class="meta" style="margin-top:16px"><a href="#/publicar">Publicar aviso con un agente</a></p>
+  </div>`;
+}
+
 function myAds() {
   const rows = mine();
   return `<div class="wrap" style="padding:24px 0 80px">
