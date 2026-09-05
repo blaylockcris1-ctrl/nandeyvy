@@ -3,8 +3,10 @@
 // From this folder: node server.js
 // Open http://localhost:8787
 const http = require("http");
+const https = require("https");
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
 
 const PORT = process.env.PORT || 8787;
 function findSite() {
@@ -21,6 +23,9 @@ function findSite() {
 }
 const ROOT = findSite();
 const STORE = process.env.STORE_PATH || path.join(__dirname, "store.json");
+const UP = path.join(__dirname, "uploads");
+if (!fs.existsSync(UP)) fs.mkdirSync(UP, { recursive: true });
+const FX = Number(process.env.FX_PYG || 7300);
 console.log("site folder:", ROOT, "exists:", fs.existsSync(path.join(ROOT, "index.html")));
 console.log("store:", STORE);
 
@@ -111,10 +116,100 @@ const server = http.createServer(async (req, res) => {
   if (p === "/api/state" && req.method === "GET") {
     return send(res, 200, JSON.stringify(load()));
   }
+  if (p === "/api/fx" && req.method === "GET") {
+    return send(res, 200, JSON.stringify({ pygPerUsd: FX }));
+  }
+  if (p === "/api/photo" && req.method === "POST") {
+    const body = await readBody(req);
+    const dataUrl = String(body.dataUrl || "");
+    const m = dataUrl.match(/^data:image\/(jpeg|jpg|png|webp);base64,(.+)$/i);
+    if (!m) return send(res, 400, JSON.stringify({ error: "foto inválida" }));
+    const buf = Buffer.from(m[2], "base64");
+    if (buf.length > 2_500_000) return send(res, 400, JSON.stringify({ error: "foto > 2.5 MB" }));
+    const id = "ph-" + Date.now();
+    const ext = m[1].toLowerCase() === "png" ? "png" : m[1].toLowerCase() === "webp" ? "webp" : "jpg";
+    fs.writeFileSync(path.join(UP, id + "." + ext), buf);
+    return send(res, 200, JSON.stringify({ url: "/uploads/" + id + "." + ext }));
+  }
+  if (p === "/api/pay" && req.method === "POST") {
+    const body = await readBody(req);
+    const plans = { usd12: 12, oficina29: 29, oficina49: 49 };
+    const usd = plans[body.plan] || 12;
+    const pyg = (usd * FX).toFixed(2);
+    const shop = String(Date.now()).slice(-8);
+    const pub = process.env.BANCARD_PUBLIC_KEY || "";
+    const priv = process.env.BANCARD_PRIVATE_KEY || "";
+    const apiBase = process.env.BANCARD_API_URL || "https://vpos.infonet.com.py:8888";
+    if (!pub || !priv) {
+      return send(res, 200, JSON.stringify({
+        demo: true,
+        usd, pyg, shop,
+        message: "Faltan BANCARD_PUBLIC_KEY y BANCARD_PRIVATE_KEY en Render. Pago simulado."
+      }));
+    }
+    const token = crypto.createHash("md5").update(priv + shop + pyg + pyg).digest("hex");
+    const payload = JSON.stringify({
+      public_key: pub,
+      operation: {
+        token,
+        shop_process_id: Number(shop),
+        currency: "PYG",
+        amount: pyg,
+        additional_data: "",
+        description: "Ñande Yvy " + (body.plan || "aviso"),
+        return_url: (process.env.PUBLIC_URL || "https://nandeyvy-2.onrender.com") + "/#/pagado",
+        cancel_url: (process.env.PUBLIC_URL || "https://nandeyvy-2.onrender.com") + "/#/publicar"
+      }
+    });
+    try {
+      const bancard = await new Promise((resolve, reject) => {
+        const u = new URL(apiBase + "/vpos/api/0.3/single_buy");
+        const lib = u.protocol === "https:" ? https : http;
+        const r = lib.request({
+          hostname: u.hostname, port: u.port, path: u.pathname,
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(payload) }
+        }, (resp) => {
+          const chunks = [];
+          resp.on("data", (c) => chunks.push(c));
+          resp.on("end", () => {
+            try { resolve(JSON.parse(Buffer.concat(chunks).toString() || "{}")); }
+            catch { reject(new Error("bancard parse")); }
+          });
+        });
+        r.on("error", reject);
+        r.write(payload);
+        r.end();
+      });
+      return send(res, 200, JSON.stringify({ demo: false, usd, pyg, shop, bancard, checkout: apiBase }));
+    } catch (e) {
+      return send(res, 502, JSON.stringify({ error: e.message, usd, pyg }));
+    }
+  }
+  if (p.startsWith("/uploads/")) {
+    const full = path.normalize(path.join(UP, path.basename(p)));
+    return fs.readFile(full, (err, data) => {
+      if (err) return send(res, 404, "not found", "text/plain");
+      const ext = path.extname(full);
+      send(res, 200, data, MIME[ext] || "application/octet-stream");
+    });
+  }
   if (p === "/api/listings" && req.method === "POST") {
     const item = await readBody(req);
     const s = load();
     if (!item.id) item.id = "SRV-" + Date.now().toString().slice(-6);
+    if (item.img && String(item.img).startsWith("data:image")) {
+      const m = String(item.img).match(/^data:image\/(jpeg|jpg|png|webp);base64,(.+)$/i);
+      if (m) {
+        const buf = Buffer.from(m[2], "base64");
+        if (buf.length <= 2_500_000) {
+          const id = "ph-" + item.id;
+          const ext = m[1].toLowerCase() === "png" ? "png" : "jpg";
+          fs.writeFileSync(path.join(UP, id + "." + ext), buf);
+          item.img = "/uploads/" + id + "." + ext;
+        }
+      }
+    }
     s.listings = [item, ...s.listings.filter((x) => x.id !== item.id)];
     save(s);
     return send(res, 200, JSON.stringify(item));
@@ -164,3 +259,4 @@ initDb().then(() => {
     console.log("Ñande Yvy → http://localhost:" + PORT);
   });
 });
+
